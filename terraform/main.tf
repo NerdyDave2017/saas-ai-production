@@ -72,22 +72,8 @@ resource "aws_iam_role_policy" "apprunner_instance" {
   })
 }
 
-resource "aws_secretsmanager_secret" "app_runner_secret" {
-  name = "${local.name_prefix}-app-runner-secret"
-}
-
-resource "aws_secretsmanager_secret_version" "app_runner" {
-  secret_id = aws_secretsmanager_secret.app_runner_secret.id
-  secret_string = jsonencode({
-    OPENROUTER_API_KEY = var.openrouter_api_key
-    CLERK_SECRET_KEY   = var.clerk_secret_key
-  })
-}
-
 resource "aws_apprunner_service" "main" {
   service_name = "${local.name_prefix}-service"
-
-  depends_on = [aws_secretsmanager_secret_version.app_runner]
 
   source_configuration {
     authentication_configuration {
@@ -105,8 +91,8 @@ resource "aws_apprunner_service" "main" {
           OPENROUTER_BASE_URL               = var.openrouter_base_url
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = var.next_public_clerk_publishable_key
           CLERK_JWKS_URL                    = var.clerk_jwks_url
-          CLERK_SECRET_KEY                  = var.clerk_secret_key
-          CLERK_JWKS_URL                    = var.clerk_jwks_url
+          OPENROUTER_API_KEY = var.openrouter_api_key
+          CLERK_SECRET_KEY   = var.clerk_secret_key
         }
       }
     }
