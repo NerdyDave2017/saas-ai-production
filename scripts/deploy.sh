@@ -19,7 +19,7 @@ set -euo pipefail
 ENVIRONMENT="${1:?Usage: $0 <environment: dev|test|prod> <project_name>}"
 PROJECT_NAME="${2:?Usage: $0 <environment> <project_name: lowercase-hyphenated>}"
 
-ROOT="$(dirname "$0")/.." 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 export TF_VAR_project_name="$PROJECT_NAME"
@@ -42,7 +42,6 @@ IMAGE_URI="${ECR_REGISTRY}/${REPO_NAME}:latest"
 
 echo "==> Phase 1: ECR, IAM, Secrets Manager (image not required yet)"
 cd "$TF_DIR"
-cd terraform
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 terraform init -input=false \
