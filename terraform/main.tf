@@ -53,20 +53,6 @@ resource "aws_iam_role" "apprunner_instance" {
   })
 }
 
-resource "aws_iam_role_policy" "apprunner_instance" {
-  role = aws_iam_role.apprunner_instance.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = []
-      }
-    ]
-  })
-}
-
 resource "aws_apprunner_service" "main" {
   service_name = "${local.name_prefix}-service"
 
