@@ -26,6 +26,7 @@ export TF_VAR_project_name="$PROJECT_NAME"
 export TF_VAR_environment="$ENVIRONMENT"
 
 : "${TF_VAR_openrouter_api_key:?Set TF_VAR_openrouter_api_key}"
+: "${TF_VAR_clerk_jwks_url:?Set TF_VAR_clerk_jwks_url}"
 : "${TF_VAR_clerk_secret_key:?Set TF_VAR_clerk_secret_key}"
 : "${AWS_REGION:?Set AWS_REGION}"
 
@@ -34,21 +35,38 @@ export TF_IN_AUTOMATION=true
 export TF_INPUT=false
 
 AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+AWS_REGION=${AWS_REGION:-us-east-1}
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 REPO_NAME="${PROJECT_NAME}-${ENVIRONMENT}"
 IMAGE_URI="${ECR_REGISTRY}/${REPO_NAME}:latest"
 
 echo "==> Phase 1: ECR, IAM, Secrets Manager (image not required yet)"
 cd "$TF_DIR"
-terraform init -input=false -reconfigure
-terraform apply -auto-approve \
-  -target=aws_ecr_repository.app_repository \
-  -target=aws_iam_role.apprunner_ecr_access \
-  -target=aws_iam_role_policy_attachment.apprunner_ecr \
-  -target=aws_iam_role.apprunner_instance \
-  -target=aws_iam_role_policy.apprunner_instance \
-  -target=aws_secretsmanager_secret.app_runner_secret \
-  -target=aws_secretsmanager_secret_version.app_runner
+cd terraform
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+terraform init -input=false \
+  -backend-config="bucket=twin-terraform-state-${AWS_ACCOUNT_ID}" \
+  -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
+  -backend-config="region=${AWS_REGION}" \
+  -backend-config="dynamodb_table=twin-terraform-locks" \
+  -backend-config="encrypt=true"
+
+if ! terraform workspace list | grep -q "$ENVIRONMENT"; then
+  terraform workspace new "$ENVIRONMENT"
+else
+  terraform workspace select "$ENVIRONMENT"
+fi
+
+# Use prod.tfvars for production environment
+if [ "$ENVIRONMENT" = "prod" ]; then
+  TF_APPLY_CMD=(terraform apply -var-file=prod.tfvars -var="project_name=$PROJECT_NAME" -var="environment=$ENVIRONMENT" -auto-approve)
+else
+  TF_APPLY_CMD=(terraform apply -var="project_name=$PROJECT_NAME" -var="environment=$ENVIRONMENT" -auto-approve)
+fi
+
+echo "==> Phase 1: Applying Terraform..."
+"${TF_APPLY_CMD[@]}"
 
 echo "==> Phase 2: Docker build and push to ${IMAGE_URI}"
 cd "$ROOT"

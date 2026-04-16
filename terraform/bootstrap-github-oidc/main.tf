@@ -68,9 +68,9 @@ locals {
   # GitHub’s `sub` is case-sensitive in IAM. Allow both the configured slug and an all-lowercase form.
   oidc_sub_patterns = trimspace(var.github_oidc_subject_claim) != "" ? [
     trimspace(var.github_oidc_subject_claim),
-  ] : distinct(compact([
-    "repo:${var.github_repository}:*",
-    "repo:${lower(var.github_repository)}:*",
+    ] : distinct(compact([
+      "repo:${var.github_repository}:*",
+      "repo:${lower(var.github_repository)}:*",
   ]))
 }
 
@@ -99,10 +99,10 @@ resource "aws_iam_role" "github_actions" {
   })
 
   tags = {
-    Name        = "GitHub Actions deploy role"
-    Repository  = var.github_repository
-    ManagedBy   = "terraform"
-    Purpose     = "bootstrap-github-oidc"
+    Name       = "GitHub Actions deploy role"
+    Repository = var.github_repository
+    ManagedBy  = "terraform"
+    Purpose    = "bootstrap-github-oidc"
   }
 }
 
@@ -157,6 +157,16 @@ resource "aws_iam_role_policy_attachment" "github_secretsmanager" {
 resource "aws_iam_role_policy_attachment" "github_iam_read" {
   role       = aws_iam_role.github_actions.name
   policy_arn = "arn:aws:iam::aws:policy/IAMReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "github_dynamodb" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "github_s3" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_role_policy" "github_tf_state_backend" {
