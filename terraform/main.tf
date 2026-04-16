@@ -3,8 +3,6 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  app_secret_arn = aws_secretsmanager_secret.app_runner_secret.arn
-
   name_prefix = "${var.project_name}-${var.environment}"
 
   common_tags = {
@@ -63,10 +61,7 @@ resource "aws_iam_role_policy" "apprunner_instance" {
     Statement = [
       {
         Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = aws_secretsmanager_secret.app_runner_secret.arn
+        Action = []
       }
     ]
   })
