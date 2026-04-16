@@ -40,7 +40,6 @@ ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 REPO_NAME="${PROJECT_NAME}-${ENVIRONMENT}"
 IMAGE_URI="${ECR_REGISTRY}/${REPO_NAME}:latest"
 
-echo "==> Phase 1: ECR, IAM, Secrets Manager (image not required yet)"
 cd "$TF_DIR"
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
@@ -57,15 +56,14 @@ else
   terraform workspace select "$ENVIRONMENT"
 fi
 
-# Use prod.tfvars for production environment
+# Shared apply arguments (full apply and ECR-only apply must stay consistent, e.g. prod.tfvars).
+TF_APPLY_ARGS=(-var="project_name=$PROJECT_NAME" -var="environment=$ENVIRONMENT" -auto-approve)
 if [ "$ENVIRONMENT" = "prod" ]; then
-  TF_APPLY_CMD=(terraform apply -var-file=prod.tfvars -var="project_name=$PROJECT_NAME" -var="environment=$ENVIRONMENT" -auto-approve)
-else
-  TF_APPLY_CMD=(terraform apply -var="project_name=$PROJECT_NAME" -var="environment=$ENVIRONMENT" -auto-approve)
+  TF_APPLY_ARGS=(-var-file=prod.tfvars "${TF_APPLY_ARGS[@]}")
 fi
 
-echo "==> Phase 1: Applying Terraform..."
-"${TF_APPLY_CMD[@]}"
+echo "==> Phase 1: Create ECR repository (Terraform -target; App Runner comes later)"
+terraform apply -target=aws_ecr_repository.app_repository "${TF_APPLY_ARGS[@]}"
 
 echo "==> Phase 2: Docker build and push to ${IMAGE_URI}"
 cd "$ROOT"
@@ -78,10 +76,9 @@ docker build \
 
 docker push "$IMAGE_URI"
 
-echo "==> Phase 3: App Runner and remaining resources"
+echo "==> Phase 3: Apply full stack (IAM, App Runner, …) — image is already in ECR"
 cd "$TF_DIR"
-terraform init -input=false -reconfigure
-terraform apply -auto-approve
+terraform apply "${TF_APPLY_ARGS[@]}"
 
 SERVICE_URL="$(terraform output -raw app_runner_service_url)"
 echo ""
