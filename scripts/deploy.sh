@@ -40,7 +40,7 @@ IMAGE_URI="${ECR_REGISTRY}/${REPO_NAME}:latest"
 
 echo "==> Phase 1: ECR, IAM, Secrets Manager (image not required yet)"
 cd "$TF_DIR"
-terraform init -input=false
+terraform init -input=false -reconfigure
 terraform apply -auto-approve \
   -target=aws_ecr_repository.app_repository \
   -target=aws_iam_role.apprunner_ecr_access \
@@ -63,6 +63,7 @@ docker push "$IMAGE_URI"
 
 echo "==> Phase 3: App Runner and remaining resources"
 cd "$TF_DIR"
+terraform init -input=false -reconfigure
 terraform apply -auto-approve
 
 SERVICE_URL="$(terraform output -raw app_runner_service_url)"

@@ -67,6 +67,7 @@ next-env.d.ts
 *.tfstate
 *.tfstate.*
 .terraform/
+terraform/ci_backend.tf
 crash.log
 crash.*.log
 override.tf

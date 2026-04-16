@@ -35,7 +35,7 @@ export TF_IN_AUTOMATION=true
 export TF_INPUT=false
 
 cd "$TF_DIR"
-terraform init -input=false
+terraform init -input=false -reconfigure
 terraform destroy -auto-approve
 
 echo ""

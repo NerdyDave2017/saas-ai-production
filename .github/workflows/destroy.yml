@@ -59,11 +59,12 @@ jobs:
 
       - name: Destroy infrastructure
         env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
           TF_VAR_project_name: ${{ vars.PROJECT_NAME || 'consultation-app' }}
           TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
           TF_VAR_openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          TF_VAR_openrouter_base_url: ${{ vars.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1' }}
           TF_VAR_clerk_secret_key: ${{ secrets.CLERK_SECRET_KEY }}
+          TF_VAR_clerk_jwks_url: ${{ secrets.CLERK_JWKS_URL }}
           TF_VAR_next_public_clerk_publishable_key: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-          TF_VAR_clerk_jwks_url: ${{ vars.CLERK_JWKS_URL }}
-        run: chmod +x scripts/destroy.sh && ./scripts/destroy.sh "${{ github.event.inputs.environment }}" "${{ vars.PROJECT_NAME }}"
+        run: chmod +x scripts/destroy.sh && ./scripts/destroy.sh "${TF_VAR_environment}" "${TF_VAR_project_name}"

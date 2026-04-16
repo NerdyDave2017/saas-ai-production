@@ -49,6 +49,18 @@ variable "role_name" {
   default     = "github-actions-saas-ai-deploy"
 }
 
+variable "terraform_state_bucket" {
+  type        = string
+  description = "S3 bucket used by the app stack for Terraform state (same as GitHub TF_STATE_BUCKET). When set, the deploy role can read/write state objects."
+  default     = ""
+}
+
+variable "terraform_state_lock_table" {
+  type        = string
+  description = "DynamoDB table used for Terraform state locking (same as TF_STATE_LOCK_TABLE). Optional."
+  default     = ""
+}
+
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -145,6 +157,49 @@ resource "aws_iam_role_policy_attachment" "github_secretsmanager" {
 resource "aws_iam_role_policy_attachment" "github_iam_read" {
   role       = aws_iam_role.github_actions.name
   policy_arn = "arn:aws:iam::aws:policy/IAMReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy" "github_tf_state_backend" {
+  count = trimspace(var.terraform_state_bucket) != "" ? 1 : 0
+  name  = "${var.role_name}-tf-state-backend"
+  role  = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = concat(
+      [
+        {
+          Sid    = "TerraformStateS3"
+          Effect = "Allow"
+          Action = [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject",
+            "s3:ListBucket",
+          ]
+          Resource = [
+            "arn:aws:s3:::${trimspace(var.terraform_state_bucket)}",
+            "arn:aws:s3:::${trimspace(var.terraform_state_bucket)}/*",
+          ]
+        },
+      ],
+      trimspace(var.terraform_state_lock_table) != "" ? [
+        {
+          Sid    = "TerraformStateLockDynamoDB"
+          Effect = "Allow"
+          Action = [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:DeleteItem",
+            "dynamodb:DescribeTable",
+          ]
+          Resource = [
+            "arn:aws:dynamodb:${var.aws_region}:${local.account_id}:table/${trimspace(var.terraform_state_lock_table)}",
+          ]
+        },
+      ] : [],
+    )
+  })
 }
 
 resource "aws_iam_role_policy" "github_terraform_app" {
