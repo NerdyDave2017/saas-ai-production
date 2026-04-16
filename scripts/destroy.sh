@@ -21,7 +21,7 @@ set -euo pipefail
 ENVIRONMENT="${1:?Usage: $0 <environment: dev|test|prod> <project_name>}"
 PROJECT_NAME="${2:?Usage: $0 <environment> <project_name: lowercase-hyphenated>}"
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(dirname "$0")/.." 
 TF_DIR="$ROOT/terraform"
 
 export TF_VAR_project_name="$PROJECT_NAME"
