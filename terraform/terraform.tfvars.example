@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars (gitignored) or use TF_VAR_* / scripts/deploy.sh
+
+openrouter_base_url               = "https://openrouter.ai/api/v1"
+openrouter_model_id               = ""
+next_public_clerk_publishable_key = ""
+
+# Sensitive — do not commit. Prefer: export TF_VAR_openrouter_api_key=... etc.
+clerk_jwks_url                    = ""
+openrouter_api_key                = ""
+clerk_secret_key                  = ""

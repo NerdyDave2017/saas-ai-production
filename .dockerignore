@@ -1,13 +1,65 @@
+# Dependencies & caches
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js build outputs (rebuilt inside the image)
 .next
+out
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.egg-info
+.eggs
+*.egg
+.venv
+venv
+env
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Environment & secrets (never copy into build context)
 .env
-.env.local
+.env.*
+!.env.example
+
+# Git & CI (not needed in the image)
 .git
-.gitignore
-README.md
+.github
+.gitattributes
+
+# Infrastructure & local tooling
+terraform
+.terraform
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+crash.log
+crash.*.log
+
+# Editor & OS
 .DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+*.swo
+.cursor
+
+# Misc
 *.log
-.vercel
+*.pem
+*.tsbuildinfo
+coverage
 dist
 build
-
+.vercel
+README.md
+CLAUDE.md
+AGENTS.md
