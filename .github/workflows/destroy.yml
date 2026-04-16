@@ -49,6 +49,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-actions-destroy
           aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -59,8 +60,8 @@ jobs:
       - name: Destroy infrastructure
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
-          TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
-          TF_VAR_environment: ${{ github.event.inputs.environment }}
+          TF_VAR_project_name: ${{ vars.PROJECT_NAME || 'consultation-app' }}
+          TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
           TF_VAR_openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
           TF_VAR_clerk_secret_key: ${{ secrets.CLERK_SECRET_KEY }}
           TF_VAR_next_public_clerk_publishable_key: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
