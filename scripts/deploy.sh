@@ -45,7 +45,7 @@ AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 terraform init -input=false \
   -backend-config="bucket=saas-ai-terraform-state-${AWS_ACCOUNT_ID}" \
-  -backend-config="key=saas-ai/${ENVIRONMENT}/terraform.tfstate" \
+  -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
   -backend-config="region=${AWS_REGION}" \
   -backend-config="dynamodb_table=saas-ai-terraform-locks" \
   -backend-config="encrypt=true"
